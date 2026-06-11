@@ -1,0 +1,287 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Whitelabel Domain Slot Simulator</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;font-size:13px;background:#f5f6f7;color:#172b4d;padding:24px}
+h1{font-size:18px;font-weight:600;margin-bottom:4px}
+.subtitle{font-size:12px;color:#6b778c;margin-bottom:24px}
+.card{background:#fff;border-radius:8px;border:1px solid #dfe1e6;padding:20px;margin-bottom:16px}
+.controls{display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;margin-bottom:16px}
+.field label{display:block;font-size:11px;font-weight:600;color:#6b778c;text-transform:uppercase;letter-spacing:.05em;margin-bottom:5px}
+input[type=text],select{width:100%;padding:7px 10px;border:1px solid #dfe1e6;border-radius:4px;font-size:13px;color:#172b4d;background:#fafbfc}
+input[type=text]:focus,select:focus{outline:none;border-color:#0052cc;background:#fff}
+button{background:#0052cc;color:#fff;border:none;border-radius:4px;padding:8px 20px;font-size:13px;font-weight:500;cursor:pointer}
+button:hover{background:#0065ff}
+.result-area{margin-top:20px}
+.slot{display:flex;align-items:flex-start;gap:10px;padding:10px 14px;border-radius:6px;border:1px solid #dfe1e6;background:#fff;margin-bottom:7px}
+.slot-num{font-size:11px;font-weight:600;min-width:52px;padding:3px 8px;border-radius:20px;text-align:center;margin-top:1px;white-space:nowrap}
+.s1 .slot-num{background:#e3fcef;color:#006644}
+.s2 .slot-num{background:#deebff;color:#0747a6}
+.s3 .slot-num{background:#eae6ff;color:#403294}
+.s4 .slot-num{background:#fffae6;color:#172b4d}
+.sX .slot-num{background:#f4f5f7;color:#97a0af}
+.sX{opacity:0.45}
+.slot-domain{font-size:13px;font-weight:600;color:#172b4d}
+.slot-reason{font-size:12px;color:#6b778c;margin-top:2px}
+.match-info{font-size:11px;color:#0052cc;margin-top:3px;font-style:italic}
+.tag{display:inline-block;font-size:11px;font-weight:500;padding:2px 7px;border-radius:20px;margin-left:7px;vertical-align:middle}
+.td{background:#ffebe6;color:#bf2600}
+.tp{background:#e3fcef;color:#006644}
+.tr{background:#deebff;color:#0747a6}
+.tg{background:#f4f5f7;color:#5e6c84}
+.tm{background:#e3fcef;color:#006644}
+.divider{font-size:11px;font-weight:600;color:#97a0af;text-transform:uppercase;letter-spacing:.06em;margin:16px 0 6px}
+.empty{font-size:13px;color:#97a0af;padding:8px 0}
+.priority-table{width:100%;border-collapse:collapse;font-size:12px;margin-top:12px}
+.priority-table th{background:#f4f5f7;text-align:left;padding:7px 10px;font-weight:600;color:#5e6c84;border-bottom:2px solid #dfe1e6}
+.priority-table td{padding:7px 10px;border-bottom:1px solid #f4f5f7;color:#172b4d}
+.priority-table tr:last-child td{border-bottom:none}
+details summary{cursor:pointer;font-size:12px;color:#0052cc;margin-top:12px;user-select:none}
+details[open] summary{margin-bottom:8px}
+</style>
+</head>
+<body>
+
+<h1>Whitelabel Domain Slot Simulator</h1>
+<p class="subtitle">Enter a keyword to see which domains are assigned to each slot, based on the Holidu domain priority framework.</p>
+
+<div class="card">
+  <div class="controls">
+    <div class="field"><label>Keyword</label><input type="text" id="kw" placeholder="e.g. villa mit hund mallorca"></div>
+    <div class="field"><label>Match type</label><select id="match">
+      <option value="exact">Exact</option>
+      <option value="broad">Broad / Phrase</option>
+    </select></div>
+    <div class="field"><label>Market</label><select id="market">
+      <option>DE</option><option>FR</option><option>AT</option><option>AU</option><option>BE</option>
+      <option>CH</option><option>DK</option><option>ES</option><option>GB</option><option>GR</option>
+      <option>IE</option><option>IT</option><option>NL</option><option>NO</option><option>PL</option>
+      <option>PT</option><option>SE</option><option>US</option>
+    </select></div>
+  </div>
+  <button onclick="run()">Assign slots</button>
+  <div class="result-area" id="result"></div>
+</div>
+
+<div class="card">
+  <strong>Priority framework</strong>
+  <table class="priority-table">
+    <thead><tr><th>#</th><th>Match</th><th>Match type</th></tr></thead>
+    <tbody>
+      <tr><td>1</td><td>Product + Differentiator + Region</td><td>Exact only</td></tr>
+      <tr><td>2</td><td>Product + Differentiator</td><td>Exact only</td></tr>
+      <tr><td>3</td><td>Product + Region</td><td>Exact and broad</td></tr>
+      <tr><td>4</td><td>Differentiator only</td><td>Exact only</td></tr>
+      <tr><td>5</td><td>Product only</td><td>Exact and broad</td></tr>
+      <tr><td>6</td><td>Region only</td><td>Exact and broad</td></tr>
+      <tr><td>7</td><td>Generic</td><td>Fallback only</td></tr>
+    </tbody>
+  </table>
+  <details>
+    <summary>Rules &amp; notes</summary>
+    <ul style="font-size:12px;color:#5e6c84;line-height:1.7;padding-left:16px">
+      <li>Slot 1 is always Holidu.</li>
+      <li>Slot 2 is always the market anchor where one exists: Ferienwohnungen (DE, AT), Gîtes (FR). Free in all other markets.</li>
+      <li>Differentiator domains are excluded on broad/phrase — they would otherwise serve on generic d_no_differentiator queries that cannot be controlled at campaign level.</li>
+      <li>Region is a hard gate: a destination domain cannot activate unless its region appears in the keyword.</li>
+      <li>A destination domain with a product tag (e.g. fincamallorca.de = p_finca + Mallorca) scores at priority 3 only when both product AND region are in the keyword.</li>
+    </ul>
+  </details>
+</div>
+
+<script>
+const PORTFOLIO=[
+  {d:'holidu.de',c:'DE',reg:[],prod:[],diff:[],type:'MAIN'},
+  {d:'ferienwohnungen.de',c:'DE',reg:[],prod:[],diff:[],type:'MAIN'},
+  {d:'fincamallorca.de',c:'DE',reg:['mallorca','balearische inseln'],prod:['p_finca'],diff:[],type:'DEST'},
+  {d:'ferienwohnungen-spanien.de',c:'DE',reg:['spain','spanien'],prod:[],diff:[],type:'DEST'},
+  {d:'ferienwohnungsüdtirol.de',c:'DE',reg:['südtirol','trentino','italy'],prod:[],diff:[],type:'DEST'},
+  {d:'bauernhof-urlaub.de',c:'DE',reg:[],prod:['p_agri'],diff:[],type:'PROD'},
+  {d:'ferienhausmithund.de',c:'DE',reg:[],prod:[],diff:['d_pets_allowed'],type:'DIFF'},
+  {d:'hundredrooms.de',c:'DE',reg:[],prod:[],diff:[],type:'GEN'},
+  {d:'bestfewo.de',c:'DE',reg:[],prod:[],diff:[],type:'GEN',pref:1},
+  {d:'holidu.fr',c:'FR',reg:[],prod:[],diff:[],type:'MAIN'},
+  {d:'gites.fr',c:'FR',reg:[],prod:[],diff:[],type:'MAIN'},
+  {d:'vacancesespagne.fr',c:'FR',reg:['spain','espagne'],prod:[],diff:[],type:'DEST'},
+  {d:'chambres-hotes.fr',c:'FR',reg:[],prod:['p_bnb'],diff:[],type:'PROD'},
+  {d:'chalets.fr',c:'FR',reg:[],prod:['p_chalet'],diff:[],type:'PROD'},
+  {d:'toplocationsdevacances.fr',c:'FR',reg:[],prod:[],diff:[],type:'GEN'},
+  {d:'holidu.at',c:'AT',reg:[],prod:[],diff:[],type:'MAIN'},
+  {d:'ferienwohnungen.at',c:'AT',reg:[],prod:[],diff:[],type:'MAIN'},
+  {d:'holidu.com.au',c:'AU',reg:[],prod:[],diff:[],type:'MAIN'},
+  {d:'holidu.be',c:'BE',reg:[],prod:[],diff:[],type:'MAIN'},
+  {d:'vakantiehuisje.be',c:'BE',reg:[],prod:[],diff:[],type:'GEN'},
+  {d:'holidu.ch',c:'CH',reg:[],prod:[],diff:[],type:'MAIN'},
+  {d:'fincas-mallorca.ch',c:'CH',reg:['mallorca','balearische inseln'],prod:['p_finca'],diff:[],type:'DEST'},
+  {d:'bauernhofurlaub.ch',c:'CH',reg:[],prod:['p_agri'],diff:[],type:'PROD'},
+  {d:'holidu.dk',c:'DK',reg:[],prod:[],diff:[],type:'MAIN'},
+  {d:'feriebolig-spanien.dk',c:'DK',reg:['spain','spanien'],prod:[],diff:[],type:'DEST'},
+  {d:'holidu.es',c:'ES',reg:[],prod:[],diff:[],type:'MAIN'},
+  {d:'vacaciones-espana.es',c:'ES',reg:['spain','espana'],prod:[],diff:[],type:'DEST'},
+  {d:'clubrural.com',c:'ES',reg:[],prod:[],diff:[],type:'GEN'},
+  {d:'alquileres-vacacionales.es',c:'ES',reg:[],prod:[],diff:[],type:'GEN'},
+  {d:'casas-de-vacaciones.es',c:'ES',reg:[],prod:[],diff:[],type:'GEN'},
+  {d:'hundredrooms.com',c:'ES',reg:[],prod:[],diff:[],type:'GEN'},
+  {d:'holidu.co.uk',c:'GB',reg:[],prod:[],diff:[],type:'MAIN'},
+  {d:'villasmajorca.co.uk',c:'GB',reg:['mallorca','balearische inseln','majorca'],prod:['p_villa'],diff:[],type:'DEST'},
+  {d:'spain-holiday.com',c:'GB',reg:['spain'],prod:[],diff:[],type:'DEST'},
+  {d:'holiday-villas.co.uk',c:'GB',reg:[],prod:['p_villa'],diff:[],type:'PROD'},
+  {d:'cottages.co.uk',c:'GB',reg:[],prod:['p_cottage'],diff:[],type:'PROD'},
+  {d:'dogfriendlycottage.com',c:'GB',reg:[],prod:[],diff:['d_pets_allowed'],type:'DIFF'},
+  {d:'holidaylets.co.uk',c:'GB',reg:[],prod:[],diff:[],type:'GEN'},
+  {d:'hundredrooms.co.uk',c:'GB',reg:[],prod:[],diff:[],type:'GEN'},
+  {d:'holidu.gr',c:'GR',reg:[],prod:[],diff:[],type:'MAIN'},
+  {d:'holidu.ie',c:'IE',reg:[],prod:[],diff:[],type:'MAIN'},
+  {d:'holidu.it',c:'IT',reg:[],prod:[],diff:[],type:'MAIN'},
+  {d:'affittivacanze-spagna.it',c:'IT',reg:['spain','spagna'],prod:[],diff:[],type:'DEST'},
+  {d:'hundredrooms.it',c:'IT',reg:[],prod:[],diff:[],type:'GEN'},
+  {d:'case-vacanze.it',c:'IT',reg:[],prod:[],diff:[],type:'GEN'},
+  {d:'holidu.nl',c:'NL',reg:[],prod:[],diff:[],type:'MAIN'},
+  {d:'villamallorca.nl',c:'NL',reg:['mallorca','balearische inseln','majorca'],prod:['p_villa'],diff:[],type:'DEST'},
+  {d:'vakantiehuizenspanje.nl',c:'NL',reg:['spain','spanje'],prod:[],diff:[],type:'DEST'},
+  {d:'vakantiehuizendirect.nl',c:'NL',reg:[],prod:[],diff:[],type:'GEN'},
+  {d:'vakantiehuisje.nl',c:'NL',reg:[],prod:[],diff:[],type:'GEN'},
+  {d:'chalets.nl',c:'NL',reg:[],prod:['p_chalet'],diff:[],type:'PROD'},
+  {d:'holidu.no',c:'NO',reg:[],prod:[],diff:[],type:'MAIN'},
+  {d:'feriebolig-spania.no',c:'NO',reg:['spain','spania'],prod:[],diff:[],type:'DEST'},
+  {d:'holidu.pl',c:'PL',reg:[],prod:[],diff:[],type:'MAIN'},
+  {d:'wakacje-hiszpania.pl',c:'PL',reg:['spain','hiszpania'],prod:[],diff:[],type:'DEST'},
+  {d:'holidu.pt',c:'PT',reg:[],prod:[],diff:[],type:'MAIN'},
+  {d:'ferias-espanha.pt',c:'PT',reg:['spain','espanha'],prod:[],diff:[],type:'DEST'},
+  {d:'holidu.se',c:'SE',reg:[],prod:[],diff:[],type:'MAIN'},
+  {d:'semesterbostad-spanien.se',c:'SE',reg:['spain','spanien'],prod:[],diff:[],type:'DEST'},
+  {d:'holidu.com',c:'US',reg:[],prod:[],diff:[],type:'MAIN'},
+];
+
+const ANCHORS={DE:'ferienwohnungen.de',AT:'ferienwohnungen.at',FR:'gites.fr'};
+const GEN_PREF={DE:['bestfewo.de','hundredrooms.de'],FR:['toplocationsdevacances.fr'],GB:['holidaylets.co.uk','hundredrooms.co.uk'],NL:['vakantiehuisje.nl','vakantiehuizendirect.nl'],ES:['clubrural.com','alquileres-vacacionales.es','casas-de-vacaciones.es','hundredrooms.com'],IT:['case-vacanze.it','hundredrooms.it'],BE:['vakantiehuisje.be']};
+
+const DIFF_WORDS={"d_pets_allowed":["dog","dogs","hund","hunde","hundefreundlich","hundeurlaub","haustier","haustiere","haustierfreundlich","mit","pet","pets","allowed","friendly","perro","perros","mascotas","chien","animaux","animal","animali","animales","cane","cani","hond","honden","huisdier","huisdieren","met","dyr","dyrehold","dyrevennlig","husdjur","husdjursvänligt","husdyr","djurvänlig","kjæledyr","kæledyr","med","avec","con","com","dog","eingezäunt","erlaubt","tilladt","tillatt","tillåtna","toegelaten","toegestaan","animais","cão","cachorro","gato","katt","katze","mascotas","perro","psem","pies","zwierzęta"],"d_close_to_lake":["see","am","badesee","seeblick","seezugang","lake","lakeside","lago","meer","sjö","innsjø","jeziora","jeziorem"],"d_close_to_sea":["meer","meerblick","sea","seafront","seaside","mare","mar","mer","strand","zee","havet","morze","ocean","coast","coastal"],"d_close_to_beach":["strand","strandnah","strandnähe","beach","beachside","playa","plage","spiaggia","praia","plaży"],"d_pool":["pool","piscina","piscine","schwimmbad","zwembad","basseng","basen","swimming","swimmingpool"],"d_skiing":["ski","skiing","skifahren","skigebiet","skipiste","piste","pistes","slalom","snow","snowboard","wintersport","narty","esqui","esquiar"],"d_luxury":["luxury","luxus","luxuriös","luxe","luxo","lusso","luksus","prestige","high-end"],"d_economy":["günstig","billig","cheap","goedkoop","affordable","barato","baratas","deal","discount","offerte","rabatt"],"d_children":["kinder","kinderfreundlich","kindern","kids","children","child","baby","niños","bambini","enfants","bébé"],"d_family":["familie","familienfreundlich","familienurlaub","family","børn","barn","kinderen","kindvriendelijk"],"d_sauna":["sauna","badstue","bastu"],"d_whirlpool":["jacuzzi","whirlpool","hot","tub","spa","boblebad"],"d_romantic":["romantisch","romantique","couple","coppia","parejas"],"d_close_to_mountains":["berge","bergen","montagna","montagne","montaña","mountains","gebirge","sierra"]};
+
+const PROD_WORDS={"p_villa":["villa","villas","ville","villen","villor","willa","ferienvilla","urlaubsvilla","vakantievilla","luxusvilla","sommervilla"],"p_cottage":["cottage","cottages","hytte","hyttetur","stuga","bjælkehus","maisonnette","rustico"],"p_house":["haus","house","houses","huis","huisje","maison","feriehus","semesterhus","landhaus"],"p_apartment":["wohnung","apartment","apartments","appartamento","appartement","piso","lägenhet","lejlighed","mieszkanie","flat"],"p_vacation_home":["ferienhaus","ferienhäuser","ferienwohnung","vakantiehuis","vakantiehuisje","feriehus","fritidshus","sommarhus","semesterbostad","maison"],"p_agri":["bauernhof","bauernhaus","bauernhofurlaub","bauernhofferien","agriturismo","agriturismi","agroturismo","farm","farmhouse","ferme","masia","masseria","casale","boerderij","bondegård","lantgård","rural","rustico","granja","cortijo"],"p_finca":["finca","fincas","ferienfinca","hacienda"],"p_chalet":["chalet","chalets","chalé","alpenchalet","baita","ferienchalet","skichalet"],"p_camping":["camping","campeggio","campings","bungalow","glamping","caravan","mobilhome"],"p_bnb":["bnb","bed","breakfast","chambre","chambres","pension","guesthouse","frühstück","auberge","hostal","posada"],"p_hut":["hütte","hütten","hutte","hytte","hut","rifugio","berghütte","almhütte","cabane"],"p_log_cabin":["cabin","lodge","log"]};
+
+function hasRegion(kwWords,regions){
+  return regions.some(r=>r.split(' ').every(w=>kwWords.includes(w)));
+}
+function hasProd(kwWords,prods){
+  return prods.some(t=>{
+    const ws=PROD_WORDS[t];
+    return ws&&kwWords.some(w=>ws.includes(w));
+  });
+}
+function matchedProdTags(kwWords,prods){
+  return prods.filter(t=>{const ws=PROD_WORDS[t];return ws&&kwWords.some(w=>ws.includes(w));});
+}
+function hasDiff(kwWords,diffs,isExact){
+  if(!isExact) return false;
+  return diffs.some(t=>{const ws=DIFF_WORDS[t];return ws&&kwWords.some(w=>ws.includes(w));});
+}
+function matchedDiffTags(kwWords,diffs){
+  return diffs.filter(t=>{const ws=DIFF_WORDS[t];return ws&&kwWords.some(w=>ws.includes(w));});
+}
+function matchedWords(kwWords,tags,dict){
+  const all=[];
+  tags.forEach(t=>{if(dict[t])kwWords.forEach(w=>{if(dict[t].includes(w)&&!all.includes(w))all.push(w);});});
+  return all;
+}
+
+function score(p,kwWords,isExact){
+  const rMatch=p.reg.length>0&&hasRegion(kwWords,p.reg);
+  const pMatch=p.prod.length>0&&hasProd(kwWords,p.prod);
+  const dMatch=p.diff.length>0&&hasDiff(kwWords,p.diff,isExact);
+
+  // Destination domains: region is hard gate
+  if(p.type==='DEST'){
+    if(!rMatch) return {score:-1,reason:'Region not found in keyword'};
+    if(pMatch) return {score:4,reason:'Product + Region match',matched:[...matchedWords(kwWords,matchedProdTags(kwWords,p.prod),PROD_WORDS),...p.reg.filter(r=>r.split(' ').every(w=>kwWords.includes(w)))]};
+    return {score:1,reason:'Region match',matched:p.reg.filter(r=>r.split(' ').every(w=>kwWords.includes(w)))};
+  }
+
+  if(p.type==='DIFF'){
+    if(!isExact) return {score:-1,reason:'Differentiator domains excluded on broad/phrase'};
+    if(!dMatch) return {score:-1,reason:'No differentiator signal in keyword'};
+    if(pMatch) return {score:5,reason:'Product + Differentiator match',matched:[...matchedWords(kwWords,matchedProdTags(kwWords,p.prod),PROD_WORDS),...matchedWords(kwWords,matchedDiffTags(kwWords,p.diff),DIFF_WORDS)]};
+    return {score:3,reason:'Differentiator match',matched:matchedWords(kwWords,matchedDiffTags(kwWords,p.diff),DIFF_WORDS)};
+  }
+
+  if(p.type==='PROD'){
+    if(!pMatch) return {score:-1,reason:'No product signal in keyword'};
+    if(dMatch) return {score:5,reason:'Product + Differentiator match',matched:[...matchedWords(kwWords,matchedProdTags(kwWords,p.prod),PROD_WORDS),...matchedWords(kwWords,matchedDiffTags(kwWords,p.diff),DIFF_WORDS)]};
+    return {score:2,reason:'Product match',matched:matchedWords(kwWords,matchedProdTags(kwWords,p.prod),PROD_WORDS)};
+  }
+
+  if(p.type==='GEN') return {score:0,reason:'Generic fallback',matched:[]};
+  return {score:-1,reason:'',matched:[]};
+}
+
+const TYPE_LABEL={MAIN:'main',DEST:'destination',PROD:'product',DIFF:'differentiator',GEN:'generic'};
+const TYPE_TAG={MAIN:'tm',DEST:'tr',PROD:'tp',DIFF:'td',GEN:'tg'};
+const SLOT_CLASS=['s1','s2','s3','s4'];
+const SLOT_LABEL=['Slot 1','Slot 2','Slot 3','Slot 4'];
+
+function run(){
+  const kw=document.getElementById('kw').value.trim();
+  const isExact=document.getElementById('match').value==='exact';
+  const market=document.getElementById('market').value;
+  const el=document.getElementById('result');
+  if(!kw){el.innerHTML='<p class="empty">Enter a keyword to assign slots.</p>';return;}
+
+  const kwWords=kw.toLowerCase().split(/\s+/).filter(Boolean);
+  const pool=PORTFOLIO.filter(p=>p.c===market);
+  if(!pool.length){el.innerHTML='<p class="empty">No domains configured for this market.</p>';return;}
+
+  const slots=[];
+  const used=new Set();
+
+  const holidu=pool.find(p=>p.type==='MAIN'&&p.d.includes('holidu'));
+  if(holidu){slots.push({...holidu,reason:'Holidu — always slot 1',matched:[]});used.add(holidu.d);}
+
+  const anchorD=ANCHORS[market];
+  if(anchorD){
+    const anchor=pool.find(p=>p.d===anchorD);
+    if(anchor){slots.push({...anchor,reason:'Market anchor — always slot 2',matched:[]});used.add(anchor.d);}
+  }
+
+  const specialists=pool.filter(p=>!used.has(p.d)&&p.type!=='MAIN');
+  const scored=specialists.map(p=>({...p,...score(p,kwWords,isExact)}));
+  scored.sort((a,b)=>b.score-a.score);
+
+  const eligible=scored.filter(p=>p.score>0);
+  const generics=scored.filter(p=>p.score===0);
+  const excluded=scored.filter(p=>p.score<0);
+
+  const genPref=(GEN_PREF[market]||[]);
+  const orderedGen=[...genPref.map(pd=>generics.find(g=>g.d===pd)).filter(Boolean),...generics.filter(g=>!genPref.includes(g.d))];
+
+  const remaining=3-slots.length;
+  const queue=[...eligible,...orderedGen];
+  const filled=[];
+  for(const p of queue){if(filled.length>=remaining)break;filled.push(p);used.add(p.d);}
+  slots.push(...filled);
+
+  const excludedAll=[...excluded,...orderedGen.slice(filled.filter(f=>f.score===0).length)].filter(p=>!used.has(p.d));
+
+  function row(p,label,cls){
+    const tl=TYPE_LABEL[p.type]||p.type;
+    const tc=TYPE_TAG[p.type]||'tg';
+    const mNote=p.matched&&p.matched.length?`<div class="match-info">matched: ${p.matched.join(', ')}</div>`:'';
+    return `<div class="slot ${cls}"><span class="slot-num">${label}</span><div><span class="slot-domain">${p.d}</span><span class="tag ${tc}">${tl}</span><div class="slot-reason">${p.reason}</div>${mNote}</div></div>`;
+  }
+
+  let html='<div class="divider">Active slots</div>';
+  slots.forEach((p,i)=>{html+=row(p,SLOT_LABEL[i]||'Slot '+(i+1),SLOT_CLASS[i]||'s4');});
+  if(excludedAll.length){
+    html+='<div class="divider" style="margin-top:14px">Excluded</div>';
+    excludedAll.forEach(p=>{html+=row(p,'—','sX');});
+  }
+  el.innerHTML=html;
+}
+
+document.getElementById('kw').addEventListener('keydown',e=>{if(e.key==='Enter')run();});
+</script>
+</body>
+</html>
